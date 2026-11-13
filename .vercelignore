@@ -1,0 +1,8 @@
+# Vercel deploys only the static Problem Tracker (see vercel.json).
+# The Streamlit apps can't run on Vercel, so keep Python files out of the
+# deployment; otherwise Vercel detects app.py and tries to run it as a server.
+*.py
+requirements.txt
+data/
+.claude/
+labs/lab-02/problem-tracker/CLAUDE.md
