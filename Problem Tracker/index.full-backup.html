@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Problem Tracker</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef0f4; --border: #dadee6;
+    --text: #1b2130; --muted: #5f6b80; --accent: #3654d1; --accent-soft: #e6ebff; --on-accent: #fff;
+    --danger: #c92a2a; --danger-soft: #ffe3e3; --warn: #b36b00; --warn-soft: #fff1d6;
+    --ok: #2b8a3e; --ok-soft: #dcf5e1; --info: #1864ab; --info-soft: #dbeefe;
+    --purple: #6741d9; --purple-soft: #ece5ff; --gray-soft: #e9ecef;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 6px 16px rgba(16,24,40,.07);
+    --radius: 10px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151c; --surface: #1a1f29; --surface-2: #232937; --border: #313949;
+      --text: #e6e9ef; --muted: #98a2b5; --accent: #7b93ff; --accent-soft: #263058; --on-accent: #0d1020;
+      --danger: #ff8787; --danger-soft: #4a2026; --warn: #ffc65c; --warn-soft: #43361b;
+      --ok: #69db7c; --ok-soft: #1d3d25; --info: #74c0fc; --info-soft: #1b3550;
+      --purple: #b197fc; --purple-soft: #33295a; --gray-soft: #2b3140;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151c; --surface: #1a1f29; --surface-2: #232937; --border: #313949;
+    --text: #e6e9ef; --muted: #98a2b5; --accent: #7b93ff; --accent-soft: #263058; --on-accent: #0d1020;
+    --danger: #ff8787; --danger-soft: #4a2026; --warn: #ffc65c; --warn-soft: #43361b;
+    --ok: #69db7c; --ok-soft: #1d3d25; --info: #74c0fc; --info-soft: #1b3550;
+    --purple: #b197fc; --purple-soft: #33295a; --gray-soft: #2b3140;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px 48px; }
+
+  /* Header */
+  header.top {
+    position: sticky; top: 0; z-index: 20; background: var(--bg);
+    border-bottom: 1px solid var(--border); margin-bottom: 16px;
+  }
+  header.top .wrap { display: flex; align-items: center; gap: 12px; padding-top: 12px; padding-bottom: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; margin-right: auto; }
+  .brand svg { color: var(--accent); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+    border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+    cursor: pointer; white-space: nowrap; line-height: 1.2;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .row:focus-visible, .card:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.danger { color: var(--danger); }
+  .btn.danger:hover { background: var(--danger-soft); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.ghost:hover { background: var(--surface-2); }
+  .btn.sm { padding: 4px 8px; font-size: 13px; }
+  .btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  kbd { font: 11px ui-monospace, monospace; padding: 1px 5px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; color: var(--muted); }
+
+  /* Menu */
+  details.menu { position: relative; }
+  details.menu > summary { list-style: none; }
+  details.menu > summary::-webkit-details-marker { display: none; }
+  .menu-list {
+    position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; z-index: 30;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 6px; display: flex; flex-direction: column;
+  }
+  .menu-list button { text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+  .menu-list button:hover { background: var(--surface-2); }
+  .menu-list hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; width: 100%; }
+  .menu-list .danger { color: var(--danger); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px 14px; text-align: left; cursor: pointer; transition: border-color .15s;
+  }
+  .stat:hover { border-color: var(--accent); }
+  .stat.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .stat .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .sub { color: var(--muted); font-size: 12px; }
+  .stat.static { cursor: default; }
+  .stat.static:hover { border-color: var(--border); }
+  .value.danger { color: var(--danger); }
+  .value.warn { color: var(--warn); }
+  .value.ok { color: var(--ok); }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 10px; margin-bottom: 12px;
+  }
+  .search { position: relative; flex: 1 1 240px; }
+  .search input { width: 100%; padding: 7px 10px 7px 32px; }
+  .search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  input[type="text"], input[type="search"], input[type="date"], select, textarea {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+  }
+  select { padding-right: 6px; }
+  .toolbar select { max-width: 160px; }
+  .check { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); cursor: pointer; user-select: none; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg .btn { border: 0; border-radius: 0; }
+  .seg .btn + .btn { border-left: 1px solid var(--border); }
+  .result-count { color: var(--muted); font-size: 13px; margin: 0 2px 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .linkish { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; }
+
+  /* Bulk bar */
+  .bulk {
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius);
+    padding: 8px 12px; margin-bottom: 12px;
+  }
+  .bulk.show { display: flex; }
+  .bulk strong { margin-right: 4px; }
+
+  /* Pills */
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .s-open { background: var(--info-soft); color: var(--info); }
+  .s-in-progress { background: var(--purple-soft); color: var(--purple); }
+  .s-blocked { background: var(--danger-soft); color: var(--danger); }
+  .s-resolved { background: var(--ok-soft); color: var(--ok); }
+  .s-closed { background: var(--gray-soft); color: var(--muted); }
+  .p-critical { background: var(--danger); color: #fff; }
+  .p-critical::before { background: #fff; }
+  .p-high { background: var(--danger-soft); color: var(--danger); }
+  .p-medium { background: var(--warn-soft); color: var(--warn); }
+  .p-low { background: var(--gray-soft); color: var(--muted); }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); margin: 2px 4px 0 0; cursor: pointer; }
+  .tag:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* List view */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-2); font-weight: 600; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--text); }
+  tr:last-child td { border-bottom: 0; }
+  .row { cursor: pointer; }
+  .row:hover td { background: var(--surface-2); }
+  .row.selected td { background: var(--accent-soft); }
+  .row.done .title-text { color: var(--muted); text-decoration: line-through; }
+  .num { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .title-text { font-weight: 600; }
+  .muted { color: var(--muted); }
+  .overdue { color: var(--danger); font-weight: 600; }
+  .due-soon { color: var(--warn); font-weight: 600; }
+  .cb { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+  td.cbcell, th.cbcell { width: 36px; padding-right: 0; }
+  .count-badge { font-size: 12px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
+
+  /* Board view */
+  .board { display: grid; grid-template-columns: repeat(5, minmax(240px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .col { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; min-height: 300px; }
+  .col.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .col-head { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; }
+  .col-body { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    cursor: grab; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .card:hover { border-color: var(--accent); }
+  .card.dragging { opacity: .45; }
+  .card .title-text { display: block; margin: 2px 0 6px; }
+  .card-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+  .avatar {
+    display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 700; flex: none;
+  }
+  .col-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px 8px; border: 1px dashed var(--border); border-radius: 8px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 56px 16px; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); }
+  .empty h2 { margin: 8px 0 4px; font-size: 18px; }
+  .empty p { color: var(--muted); margin: 0 0 16px; }
+  .empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+  /* Dialogs */
+  dialog {
+    border: 1px solid var(--border); border-radius: 14px; padding: 0; background: var(--surface); color: var(--text);
+    box-shadow: var(--shadow); width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 32px);
+  }
+  dialog::backdrop { background: rgba(10, 14, 24, .5); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; }
+  .dlg-head h2 { margin: 0; font-size: 17px; }
+  .dlg-body { padding: 16px 20px; overflow: auto; }
+  .dlg-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-weight: 600; font-size: 13px; }
+  .field .hint { color: var(--muted); font-size: 12px; }
+  .field input, .field select, .field textarea { width: 100%; }
+  textarea { resize: vertical; min-height: 90px; }
+  .req { color: var(--danger); }
+  .error-msg { color: var(--danger); font-size: 12px; display: none; }
+  .invalid .error-msg { display: block; }
+  .invalid input { border-color: var(--danger); }
+
+  /* Drawer */
+  dialog.drawer {
+    margin: 0 0 0 auto; height: 100vh; max-height: 100vh; width: min(560px, 100vw);
+    border-radius: 0; border-width: 0 0 0 1px; display: none; flex-direction: column;
+  }
+  dialog.drawer[open] { display: flex; animation: slide .18s ease-out; }
+  @keyframes slide { from { transform: translateX(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+  .drawer .dlg-body { flex: 1; }
+  .meta-grid { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; align-items: center; margin-bottom: 18px; }
+  .meta-grid dt { color: var(--muted); font-size: 13px; }
+  .meta-grid dd { margin: 0; }
+  .meta-grid select { padding: 4px 8px; }
+  .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; margin: 20px 0 8px; }
+  .desc { white-space: pre-wrap; word-wrap: break-word; background: var(--surface-2); padding: 12px; border-radius: 8px; }
+  .comment { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .comment-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .comment-text { white-space: pre-wrap; word-wrap: break-word; }
+  .timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--border); }
+  .timeline li { position: relative; padding: 0 0 10px 8px; font-size: 13px; }
+  .timeline li::before { content: ""; position: absolute; left: -20px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+  .timeline time { color: var(--muted); font-size: 12px; display: block; }
+
+  /* Toasts */
+  .toasts { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; width: calc(100% - 32px); }
+  .toast {
+    pointer-events: auto; background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 8px;
+    box-shadow: var(--shadow); display: flex; gap: 14px; align-items: center; max-width: 480px; animation: pop .18s ease-out;
+  }
+  .toast.error { background: var(--danger); color: #fff; }
+  .toast button { background: none; border: 0; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+  @keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; align-items: center; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  @media (max-width: 820px) {
+    .hide-md { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .toolbar select { flex: 1 1 130px; max-width: none; }
+  }
+  @media (max-width: 560px) {
+    .hide-sm { display: none; }
+    .brand span.full { display: none; }
+    th, td { padding: 9px 8px; }
+    .meta-grid { grid-template-columns: 100px 1fr; }
+  }
+  @media print {
+    header.top, .toolbar, .bulk, .stats { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>Problem<span class="full"> Tracker</span></span>
+    </div>
+    <button class="btn primary" id="btnNew" title="New problem (N)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      New problem
+    </button>
+    <button class="btn" id="btnTheme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <details class="menu" id="mainMenu">
+      <summary class="btn" aria-label="More actions">⋯</summary>
+      <div class="menu-list" role="menu">
+        <button data-menu="export-json" role="menuitem">Export JSON backup</button>
+        <button data-menu="export-csv" role="menuitem">Export CSV (filtered)</button>
+        <button data-menu="import" role="menuitem">Import JSON…</button>
+        <hr>
+        <button data-menu="sample" role="menuitem">Add sample problems</button>
+        <button data-menu="help" role="menuitem">Keyboard shortcuts</button>
+        <hr>
+        <button data-menu="clear" class="danger" role="menuitem">Delete all data…</button>
+      </div>
+    </details>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="stats" id="stats" aria-label="Summary"></section>
+
+  <section class="toolbar" aria-label="Filters">
+    <label class="search">
+      <span class="sr-only">Search</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="q" placeholder="Search title, description, tags, comments, #id…  ( / )">
+    </label>
+    <select id="fStatus" aria-label="Filter by status"></select>
+    <select id="fPriority" aria-label="Filter by priority"></select>
+    <select id="fCategory" aria-label="Filter by category"></select>
+    <select id="fAssignee" aria-label="Filter by assignee"></select>
+    <select id="fSort" aria-label="Sort by">
+      <option value="updated">Recently updated</option>
+      <option value="created-desc">Newest first</option>
+      <option value="created-asc">Oldest first</option>
+      <option value="priority">Priority</option>
+      <option value="due">Due date</option>
+      <option value="title">Title A–Z</option>
+      <option value="num">ID</option>
+    </select>
+    <label class="check"><input type="checkbox" class="cb" id="fHideDone"> Hide resolved/closed</label>
+    <div class="seg" role="group" aria-label="View">
+      <button class="btn" data-view="list" title="List view (L)">☰ List</button>
+      <button class="btn" data-view="board" title="Board view (B)">▦ Board</button>
+    </div>
+  </section>
+
+  <div class="bulk" id="bulk" role="region" aria-label="Bulk actions">
+    <strong id="bulkCount">0 selected</strong>
+    <select id="bulkStatus" aria-label="Set status for selected"><option value="">Set status…</option></select>
+    <select id="bulkPriority" aria-label="Set priority for selected"><option value="">Set priority…</option></select>
+    <button class="btn sm danger" id="bulkDelete">Delete</button>
+    <button class="btn sm ghost" id="bulkClear">Clear selection</button>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+  <section id="view" aria-live="polite"></section>
+</main>
+
+<!-- Create / edit dialog -->
+<dialog id="formDlg" aria-labelledby="formTitle">
+  <form id="problemForm" novalidate>
+    <div class="dlg-head">
+      <h2 id="formTitle">New problem</h2>
+      <button type="button" class="btn ghost" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="form-grid">
+        <div class="field full" id="titleField">
+          <label for="fTitle">Title <span class="req">*</span></label>
+          <input type="text" id="fTitle" name="title" maxlength="200" autocomplete="off" placeholder="Short summary of the problem">
+          <span class="error-msg">A title is required.</span>
+        </div>
+        <div class="field full">
+          <label for="fDesc">Description</label>
+          <textarea id="fDesc" name="description" rows="5" placeholder="What happened? Steps to reproduce, expected vs. actual behavior, impact…"></textarea>
+        </div>
+        <div class="field">
+          <label for="fStatusIn">Status</label>
+          <select id="fStatusIn" name="status"></select>
+        </div>
+        <div class="field">
+          <label for="fPriorityIn">Priority</label>
+          <select id="fPriorityIn" name="priority"></select>
+        </div>
+        <div class="field">
+          <label for="fCategoryIn">Category</label>
+          <input type="text" id="fCategoryIn" name="category" list="categoryList" autocomplete="off" placeholder="e.g. Bug, Network">
+          <datalist id="categoryList"></datalist>
+        </div>
+        <div class="field">
+          <label for="fAssigneeIn">Assignee</label>
+          <input type="text" id="fAssigneeIn" name="assignee" list="assigneeList" autocomplete="off" placeholder="Name">
+          <datalist id="assigneeList"></datalist>
+        </div>
+        <div class="field">
+          <label for="fReporterIn">Reported by</label>
+          <input type="text" id="fReporterIn" name="reporter" list="assigneeList" autocomplete="off" placeholder="Name">
+        </div>
+        <div class="field">
+          <label for="fDueIn">Due date</label>
+          <input type="date" id="fDueIn" name="dueDate">
+        </div>
+        <div class="field full">
+          <label for="fTagsIn">Tags</label>
+          <input type="text" id="fTagsIn" name="tags" autocomplete="off" placeholder="login, mobile, urgent">
+          <span class="hint">Separate tags with commas.</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary" id="formSubmit">Create problem</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Detail drawer -->
+<dialog id="detailDlg" class="drawer" aria-labelledby="detailTitle">
+  <div class="dlg-head">
+    <h2 id="detailTitle">Problem</h2>
+    <div style="display:flex;gap:6px">
+      <button class="btn sm" data-act="edit">Edit</button>
+      <button class="btn sm" data-act="duplicate" title="Duplicate">Duplicate</button>
+      <button class="btn sm danger" data-act="delete">Delete</button>
+      <button class="btn sm ghost" data-close aria-label="Close">✕</button>
+    </div>
+  </div>
+  <div class="dlg-body" id="detailBody"></div>
+</dialog>
+
+<!-- Confirm dialog -->
+<dialog id="confirmDlg" style="width:min(420px, calc(100vw - 32px))">
+  <div class="dlg-head"><h2 id="confirmTitle">Are you sure?</h2></div>
+  <div class="dlg-body"><p id="confirmMsg" style="margin:0"></p></div>
+  <div class="dlg-foot" id="confirmFoot"></div>
+</dialog>
+
+<!-- Help dialog -->
+<dialog id="helpDlg" style="width:min(420px, calc(100vw - 32px))">
+  <div class="dlg-head"><h2>Keyboard shortcuts</h2><button class="btn ghost" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <div class="help-grid">
+      <kbd>N</kbd><span>New problem</span>
+      <kbd>/</kbd><span>Focus search</span>
+      <kbd>L</kbd><span>List view</span>
+      <kbd>B</kbd><span>Board view</span>
+      <kbd>E</kbd><span>Edit open problem</span>
+      <kbd>Esc</kbd><span>Close dialog / clear search</span>
+      <kbd>Ctrl + Enter</kbd><span>Save form / post comment</span>
+      <kbd>?</kbd><span>Show this help</span>
+    </div>
+  </div>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Config ----------
+  const STORE_KEY = 'problemTracker.data.v1';
+  const PREFS_KEY = 'problemTracker.prefs.v1';
+
+  const STATUSES = [
+    { key: 'open',        label: 'Open' },
+    { key: 'in-progress', label: 'In Progress' },
+    { key: 'blocked',     label: 'Blocked' },
+    { key: 'resolved',    label: 'Resolved' },
+    { key: 'closed',      label: 'Closed' },
+  ];
+  const PRIORITIES = [
+    { key: 'critical', label: 'Critical', rank: 4 },
+    { key: 'high',     label: 'High',     rank: 3 },
+    { key: 'medium',   label: 'Medium',   rank: 2 },
+    { key: 'low',      label: 'Low',      rank: 1 },
+  ];
+  const DEFAULT_CATEGORIES = ['Bug', 'Hardware', 'Software', 'Network', 'Access / Accounts', 'Process', 'Feature Request', 'Other'];
+  const DONE = new Set(['resolved', 'closed']);
+  const FIELD_LABELS = {
+    title: 'Title', description: 'Description', status: 'Status', priority: 'Priority',
+    category: 'Category', assignee: 'Assignee', reporter: 'Reporter', dueDate: 'Due date', tags: 'Tags',
+  };
+  const DEFAULT_PREFS = {
+    q: '', status: 'all', priority: 'all', category: 'all', assignee: 'all',
+    sort: 'updated', hideDone: false, view: 'list', quick: null, theme: null,
+  };
+
+  // ---------- Helpers ----------
+  const $ = (sel, el = document) => el.querySelector(sel);
+  const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+  const pad = n => String(n).padStart(2, '0');
+  const todayStr = (offsetDays = 0) => {
+    const d = new Date(); d.setDate(d.getDate() + offsetDays);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+  const statusLabel = k => (STATUSES.find(s => s.key === k) || {}).label || k;
+  const prioLabel = k => (PRIORITIES.find(p => p.key === k) || {}).label || k;
+  const prioRank = k => (PRIORITIES.find(p => p.key === k) || {}).rank || 0;
+  const isDone = p => DONE.has(p.status);
+  const isOverdue = p => !!p.dueDate && !isDone(p) && p.dueDate < todayStr();
+  const isDueSoon = p => !!p.dueDate && !isDone(p) && !isOverdue(p) && p.dueDate <= todayStr(2);
+  const fmtDate = ymd => ymd ? new Date(ymd + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const fmtDateTime = ts => new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const initials = name => name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const parseTags = str => [...new Set(String(str || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean))];
+
+  function rel(ts) {
+    const s = (Date.now() - ts) / 1000;
+    if (s < 45) return 'just now';
+    const m = s / 60; if (m < 60) return `${Math.round(m)}m ago`;
+    const h = m / 60; if (h < 24) return `${Math.round(h)}h ago`;
+    const d = h / 24; if (d < 30) return `${Math.round(d)}d ago`;
+    return new Date(ts).toLocaleDateString();
+  }
+  function duration(ms) {
+    const h = ms / 3.6e6;
+    if (h < 1) return `${Math.max(1, Math.round(ms / 6e4))}m`;
+    if (h < 48) return `${h.toFixed(1)}h`;
+    return `${(h / 24).toFixed(1)}d`;
+  }
+  function dueHtml(p) {
+    if (!p.dueDate) return '<span class="muted">—</span>';
+    if (isOverdue(p)) return `<span class="overdue" title="Overdue">⚠ ${esc(fmtDate(p.dueDate))}</span>`;
+    if (isDueSoon(p)) return `<span class="due-soon" title="Due soon">${esc(fmtDate(p.dueDate))}</span>`;
+    return `<span>${esc(fmtDate(p.dueDate))}</span>`;
+  }
+  const statusPill = k => `<span class="pill s-${esc(k)}">${esc(statusLabel(k))}</span>`;
+  const prioPill = k => `<span class="pill p-${esc(k)}">${esc(prioLabel(k))}</span>`;
+
+  // ---------- State & persistence ----------
+  const state = {
+    problems: [],
+    nextNum: 1,
+    selected: new Set(),
+    detailId: null,
+    editingId: null,
+    prefs: { ...DEFAULT_PREFS },
+  };
+
+  function normalize(raw) {
+    const now = Date.now();
+    const p = raw && typeof raw === 'object' ? raw : {};
+    return {
+      id: typeof p.id === 'string' && p.id ? p.id : uid(),
+      num: Number.isInteger(p.num) && p.num > 0 ? p.num : 0,
+      title: String(p.title || 'Untitled problem').slice(0, 200),
+      description: String(p.description || ''),
+      status: STATUSES.some(s => s.key === p.status) ? p.status : 'open',
+      priority: PRIORITIES.some(x => x.key === p.priority) ? p.priority : 'medium',
+      category: String(p.category || ''),
+      assignee: String(p.assignee || ''),
+      reporter: String(p.reporter || ''),
+      dueDate: /^\d{4}-\d{2}-\d{2}$/.test(p.dueDate || '') ? p.dueDate : '',
+      tags: Array.isArray(p.tags) ? parseTags(p.tags.join(',')) : parseTags(p.tags),
+      createdAt: Number(p.createdAt) || now,
+      updatedAt: Number(p.updatedAt) || Number(p.createdAt) || now,
+      resolvedAt: Number(p.resolvedAt) || null,
+      comments: Array.isArray(p.comments)
+        ? p.comments.filter(c => c && c.text).map(c => ({ id: c.id || uid(), text: String(c.text), at: Number(c.at) || now }))
+        : [],
+      history: Array.isArray(p.history)
+        ? p.history.filter(h => h && h.text).map(h => ({ at: Number(h.at) || now, text: String(h.text) }))
+        : [],
+    };
+  }
+
+  // Assign sequential numbers to any problem missing one (or duplicated) and fix nextNum.
+  function renumber() {
+    const seen = new Set();
+    let max = state.problems.reduce((m, p) => Math.max(m, p.num || 0), 0);
+    state.problems
+      .slice().sort((a, b) => a.createdAt - b.createdAt)
+      .forEach(p => {
+        if (!p.num || seen.has(p.num)) p.num = ++max;
+        seen.add(p.num);
+      });
+    state.nextNum = max + 1;
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        state.problems = Array.isArray(data.problems) ? data.problems.map(normalize) : [];
+      }
+    } catch (e) {
+      console.error('Failed to load data', e);
+      state.problems = [];
+    }
+    renumber();
+    try {
+      const rawPrefs = localStorage.getItem(PREFS_KEY);
+      if (rawPrefs) state.prefs = { ...DEFAULT_PREFS, ...JSON.parse(rawPrefs) };
+    } catch (e) { /* ignore — defaults are fine */ }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ version: 1, savedAt: Date.now(), problems: state.problems }));
+    } catch (e) {
+      console.error(e);
+      toast('Could not save — browser storage may be full or disabled.', { type: 'error' });
+    }
+  }
+  function savePrefs() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(state.prefs)); } catch (e) { /* non-critical */ }
+  }
+  function commit() { save(); render(); }
+
+  const find = id => state.problems.find(p => p.id === id);
+
+  // ---------- Mutations ----------
+  function createProblem(fields) {
+    const now = Date.now();
+    const p = normalize({ ...fields, id: uid(), num: state.nextNum++, createdAt: now, updatedAt: now });
+    if (isDone(p)) p.resolvedAt = now;
+    p.history.push({ at: now, text: `Created with status ${statusLabel(p.status)} and priority ${prioLabel(p.priority)}` });
+    state.problems.push(p);
+    commit();
+    return p;
+  }
+
+  function fmtVal(field, v) {
+    if (field === 'status') return statusLabel(v);
+    if (field === 'priority') return prioLabel(v);
+    if (field === 'tags') return v.length ? v.join(', ') : 'none';
+    if (field === 'dueDate') return v ? fmtDate(v) : 'none';
+    return v || 'none';
+  }
+
+  function updateProblem(id, changes, { silent = false } = {}) {
+    const p = find(id);
+    if (!p) return false;
+    const entries = [];
+    for (const [k, v] of Object.entries(changes)) {
+      const same = Array.isArray(v) ? JSON.stringify(p[k]) === JSON.stringify(v) : p[k] === v;
+      if (same) continue;
+      entries.push(k === 'description' ? 'Updated the description' : `${FIELD_LABELS[k]}: ${fmtVal(k, p[k])} → ${fmtVal(k, v)}`);
+      p[k] = v;
+    }
+    if (!entries.length) return false;
+    const now = Date.now();
+    if ('status' in changes) {
+      if (isDone(p) && !p.resolvedAt) p.resolvedAt = now;
+      if (!isDone(p)) p.resolvedAt = null;
+    }
+    p.updatedAt = now;
+    entries.forEach(text => p.history.push({ at: now, text }));
+    if (!silent) commit();
+    return true;
+  }
+
+  function deleteProblems(ids) {
+    const idSet = new Set(ids);
+    const removed = state.problems.filter(p => idSet.has(p.id));
+    if (!removed.length) return;
+    state.problems = state.problems.filter(p => !idSet.has(p.id));
+    ids.forEach(id => state.selected.delete(id));
+    if (idSet.has(state.detailId)) closeDetail();
+    commit();
+    const label = removed.length === 1 ? `Deleted #${removed[0].num}` : `Deleted ${removed.length} problems`;
+    toast(label, {
+      action: 'Undo',
+      onAction: () => {
+        state.problems.push(...removed);
+        commit();
+        toast('Restored');
+      },
+    });
+  }
+
+  function addComment(id, text) {
+    const p = find(id);
+    if (!p || !text.trim()) return;
+    const now = Date.now();
+    p.comments.push({ id: uid(), text: text.trim(), at: now });
+    p.history.push({ at: now, text: 'Added a comment' });
+    p.updatedAt = now;
+    commit();
+  }
+
+  function deleteComment(id, commentId) {
+    const p = find(id);
+    if (!p) return;
+    p.comments = p.comments.filter(c => c.id !== commentId);
+    p.history.push({ at: Date.now(), text: 'Deleted a comment' });
+    p.updatedAt = Date.now();
+    commit();
+  }
+
+  // ---------- Filtering & sorting ----------
+  function getFiltered() {
+    const f = state.prefs;
+    const terms = f.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const onBoard = f.view === 'board';
+    const list = state.problems.filter(p => {
+      if (f.status !== 'all' && p.status !== f.status) return false;
+      // On the board, done columns stay visible so they work as drop targets.
+      if (f.hideDone && !onBoard && f.status === 'all' && isDone(p)) return false;
+      if (f.priority !== 'all' && p.priority !== f.priority) return false;
+      if (f.category !== 'all' && (p.category || '__none') !== f.category) return false;
+      if (f.assignee !== 'all' && (p.assignee || '__none') !== f.assignee) return false;
+      if (f.quick === 'overdue' && !isOverdue(p)) return false;
+      if (f.quick === 'active' && isDone(p)) return false;
+      if (f.quick === 'urgent' && (isDone(p) || prioRank(p.priority) < 3)) return false;
+      if (f.quick === 'unassigned' && (isDone(p) || p.assignee)) return false;
+      if (terms.length) {
+        const hay = [p.title, p.description, p.category, p.assignee, p.reporter, '#' + p.num,
+          ...p.tags.map(t => '#' + t + ' ' + t), ...p.comments.map(c => c.text)].join(' ').toLowerCase();
+        if (!terms.every(t => hay.includes(t))) return false;
+      }
+      return true;
+    });
+
+    const byUpdated = (a, b) => b.updatedAt - a.updatedAt;
+    const sorters = {
+      'updated': byUpdated,
+      'created-desc': (a, b) => b.createdAt - a.createdAt,
+      'created-asc': (a, b) => a.createdAt - b.createdAt,
+      'priority': (a, b) => prioRank(b.priority) - prioRank(a.priority) || byUpdated(a, b),
+      'due': (a, b) => (a.dueDate || '9999') .localeCompare(b.dueDate || '9999') || prioRank(b.priority) - prioRank(a.priority),
+      'title': (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),
+      'num': (a, b) => a.num - b.num,
+    };
+    return list.sort(sorters[f.sort] || byUpdated);
+  }
+
+  const uniqueValues = key => [...new Set(state.problems.map(p => p[key]).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+  // ---------- Rendering ----------
+  function render() {
+    renderStats();
+    renderFilters();
+    renderView();
+    renderBulk();
+    if (state.detailId) renderDetail();
+  }
+
+  function renderStats() {
+    const ps = state.problems;
+    const active = ps.filter(p => !isDone(p));
+    const overdue = ps.filter(isOverdue).length;
+    const urgent = active.filter(p => prioRank(p.priority) >= 3).length;
+    const unassigned = active.filter(p => !p.assignee).length;
+    const weekAgo = Date.now() - 7 * 864e5;
+    const resolvedWeek = ps.filter(p => p.resolvedAt && p.resolvedAt >= weekAgo).length;
+    const times = ps.filter(p => isDone(p) && p.resolvedAt).map(p => p.resolvedAt - p.createdAt);
+    const avg = times.length ? duration(times.reduce((a, b) => a + b, 0) / times.length) : '—';
+    const q = state.prefs.quick;
+
+    const tile = (key, label, value, sub, cls = '') => `
+      <button class="stat ${q === key ? 'active' : ''}" data-quick="${key}" aria-pressed="${q === key}">
+        <div class="label">${label}</div>
+        <div class="value ${cls}">${value}</div>
+        <div class="sub">${sub}</div>
+      </button>`;
+
+    $('#stats').innerHTML =
+      tile('active', 'Active', active.length, `of ${ps.length} total`) +
+      tile('urgent', 'High / Critical', urgent, 'active, high priority', urgent ? 'warn' : '') +
+      tile('overdue', 'Overdue', overdue, 'past due date', overdue ? 'danger' : '') +
+      tile('unassigned', 'Unassigned', unassigned, 'active, no owner') +
+      `<div class="stat static">
+        <div class="label">Resolved (7 days)</div>
+        <div class="value ok">${resolvedWeek}</div>
+        <div class="sub">avg. resolution ${avg}</div>
+      </div>`;
+  }
+
+  function fillSelect(sel, options, value) {
+    sel.innerHTML = options.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+    sel.value = options.some(([v]) => v === value) ? value : options[0][0];
+    return sel.value;
+  }
+
+  function renderFilters() {
+    const f = state.prefs;
+    const count = key => state.problems.filter(p => p.status === key).length;
+    f.status = fillSelect($('#fStatus'), [['all', 'All statuses'], ...STATUSES.map(s => [s.key, `${s.label} (${count(s.key)})`])], f.status);
+    f.priority = fillSelect($('#fPriority'), [['all', 'All priorities'], ...PRIORITIES.map(p => [p.key, p.label])], f.priority);
+    const cats = uniqueValues('category');
+    f.category = fillSelect($('#fCategory'), [['all', 'All categories'], ...cats.map(c => [c, c]), ['__none', 'No category']], f.category);
+    const people = uniqueValues('assignee');
+    f.assignee = fillSelect($('#fAssignee'), [['all', 'All assignees'], ...people.map(a => [a, a]), ['__none', 'Unassigned']], f.assignee);
+    $('#fSort').value = f.sort;
+    $('#fHideDone').checked = f.hideDone;
+    if (document.activeElement !== $('#q')) $('#q').value = f.q;
+    $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === f.view)));
+
+    // Datalists for the form
+    $('#categoryList').innerHTML = [...new Set([...DEFAULT_CATEGORIES, ...cats])].map(c => `<option value="${esc(c)}">`).join('');
+    $('#assigneeList').innerHTML = [...new Set([...people, ...uniqueValues('reporter')])].map(a => `<option value="${esc(a)}">`).join('');
+  }
+
+  function filtersActive() {
+    const f = state.prefs;
+    return f.q || f.status !== 'all' || f.priority !== 'all' || f.category !== 'all' || f.assignee !== 'all' || f.quick || f.hideDone;
+  }
+
+  function renderView() {
+    const view = $('#view');
+    const list = getFiltered();
+
+    // Drop selections that are no longer visible
+    const visible = new Set(list.map(p => p.id));
+    [...state.selected].forEach(id => { if (!visible.has(id)) state.selected.delete(id); });
+
+    const quickNames = { active: 'Active', urgent: 'High / Critical', overdue: 'Overdue', unassigned: 'Unassigned' };
+    $('#resultCount').innerHTML = state.problems.length
+      ? `Showing ${list.length} of ${state.problems.length} problem${state.problems.length === 1 ? '' : 's'}
+         ${state.prefs.quick ? `· <strong>${quickNames[state.prefs.quick]}</strong>` : ''}
+         ${filtersActive() ? '· <button class="linkish" data-act="reset-filters">Reset filters</button>' : ''}`
+      : '';
+
+    if (!state.problems.length) {
+      view.innerHTML = `
+        <div class="empty">
+          <div style="font-size:36px">🗂️</div>
+          <h2>No problems tracked yet</h2>
+          <p>Log your first problem, or load some sample data to explore the features.</p>
+          <div class="actions">
+            <button class="btn primary" data-act="new">+ New problem</button>
+            <button class="btn" data-act="sample">Load sample data</button>
+            <button class="btn" data-act="import">Import JSON</button>
+          </div>
+        </div>`;
+      return;
+    }
+
+    if (state.prefs.view === 'board') return renderBoard(view, list);
+
+    if (!list.length) {
+      view.innerHTML = `<div class="empty"><h2>No matches</h2><p>No problems match the current filters.</p>
+        <div class="actions"><button class="btn" data-act="reset-filters">Reset filters</button></div></div>`;
+      return;
+    }
+
+    const allSel = list.every(p => state.selected.has(p.id));
+    const sortHead = (key, label, cls = '') => `<th class="sortable ${cls}" data-sort="${key}">${label}${state.prefs.sort === key ? ' ▾' : ''}</th>`;
+    view.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="cbcell"><input type="checkbox" class="cb" id="selAll" aria-label="Select all" ${allSel ? 'checked' : ''}></th>
+            ${sortHead('num', 'ID', 'hide-sm')}
+            ${sortHead('title', 'Problem')}
+            <th>Status</th>
+            ${sortHead('priority', 'Priority', 'hide-sm')}
+            <th class="hide-md">Category</th>
+            <th class="hide-md">Assignee</th>
+            ${sortHead('due', 'Due', 'hide-md')}
+            ${sortHead('updated', 'Updated', 'hide-md')}
+          </tr></thead>
+          <tbody>
+            ${list.map(p => `
+              <tr class="row ${state.selected.has(p.id) ? 'selected' : ''} ${isDone(p) ? 'done' : ''}" data-id="${p.id}" tabindex="0">
+                <td class="cbcell"><input type="checkbox" class="cb row-cb" aria-label="Select #${p.num}" ${state.selected.has(p.id) ? 'checked' : ''}></td>
+                <td class="num hide-sm">#${p.num}</td>
+                <td>
+                  <span class="title-text">${esc(p.title)}</span>
+                  ${p.comments.length ? `<span class="count-badge" title="Comments">💬 ${p.comments.length}</span>` : ''}
+                  ${p.tags.length ? `<div>${p.tags.map(t => `<span class="tag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</div>` : ''}
+                </td>
+                <td>${statusPill(p.status)}</td>
+                <td class="hide-sm">${prioPill(p.priority)}</td>
+                <td class="hide-md">${p.category ? esc(p.category) : '<span class="muted">—</span>'}</td>
+                <td class="hide-md">${p.assignee ? esc(p.assignee) : '<span class="muted">Unassigned</span>'}</td>
+                <td class="hide-md">${dueHtml(p)}</td>
+                <td class="hide-md muted" title="${esc(fmtDateTime(p.updatedAt))}">${rel(p.updatedAt)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderBoard(view, list) {
+    const cols = state.prefs.status === 'all' ? STATUSES : STATUSES.filter(s => s.key === state.prefs.status);
+    view.innerHTML = `<div class="board" style="grid-template-columns: repeat(${cols.length}, minmax(240px, 1fr))">
+      ${cols.map(s => {
+        const items = list.filter(p => p.status === s.key);
+        return `
+          <div class="col" data-status="${s.key}">
+            <div class="col-head">${statusPill(s.key)}<span class="muted">${items.length}</span></div>
+            <div class="col-body">
+              ${items.length ? items.map(p => `
+                <div class="card" draggable="true" data-id="${p.id}" tabindex="0">
+                  <div class="card-meta"><span class="num">#${p.num}</span>${prioPill(p.priority)}${p.category ? `<span class="muted">${esc(p.category)}</span>` : ''}</div>
+                  <span class="title-text">${esc(p.title)}</span>
+                  ${p.tags.length ? `<div style="margin-bottom:6px">${p.tags.map(t => `<span class="tag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</div>` : ''}
+                  <div class="card-meta" style="justify-content:space-between">
+                    <span>${p.dueDate ? dueHtml(p) : ''}${p.comments.length ? `<span class="count-badge">💬 ${p.comments.length}</span>` : ''}</span>
+                    ${p.assignee ? `<span class="avatar" title="${esc(p.assignee)}">${esc(initials(p.assignee))}</span>` : ''}
+                  </div>
+                </div>`).join('') : '<div class="col-empty">Drop problems here</div>'}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  function renderBulk() {
+    const n = state.selected.size;
+    $('#bulk').classList.toggle('show', n > 0 && state.prefs.view === 'list');
+    $('#bulkCount').textContent = `${n} selected`;
+  }
+
+  function renderDetail() {
+    const p = find(state.detailId);
+    if (!p) { closeDetail(); return; }
+    $('#detailTitle').textContent = `#${p.num}`;
+    const opt = (arr, cur) => arr.map(x => `<option value="${x.key}" ${x.key === cur ? 'selected' : ''}>${esc(x.label)}</option>`).join('');
+    const draft = $('#commentInput') ? $('#commentInput').value : '';
+
+    $('#detailBody').innerHTML = `
+      <h3 style="margin:0 0 14px;font-size:20px;line-height:1.3;word-wrap:break-word">${esc(p.title)}</h3>
+      <dl class="meta-grid">
+        <dt>Status</dt><dd><select data-field="status" aria-label="Status">${opt(STATUSES, p.status)}</select></dd>
+        <dt>Priority</dt><dd><select data-field="priority" aria-label="Priority">${opt(PRIORITIES, p.priority)}</select></dd>
+        <dt>Category</dt><dd>${p.category ? esc(p.category) : '<span class="muted">—</span>'}</dd>
+        <dt>Assignee</dt><dd>${p.assignee ? esc(p.assignee) : '<span class="muted">Unassigned</span>'}</dd>
+        <dt>Reported by</dt><dd>${p.reporter ? esc(p.reporter) : '<span class="muted">—</span>'}</dd>
+        <dt>Due</dt><dd>${dueHtml(p)}</dd>
+        <dt>Created</dt><dd>${esc(fmtDateTime(p.createdAt))}</dd>
+        <dt>Updated</dt><dd>${esc(fmtDateTime(p.updatedAt))} <span class="muted">(${rel(p.updatedAt)})</span></dd>
+        ${p.resolvedAt ? `<dt>Resolved</dt><dd>${esc(fmtDateTime(p.resolvedAt))} <span class="muted">(took ${duration(p.resolvedAt - p.createdAt)})</span></dd>` : ''}
+        ${p.tags.length ? `<dt>Tags</dt><dd>${p.tags.map(t => `<span class="tag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</dd>` : ''}
+      </dl>
+
+      <div class="section-title">Description</div>
+      ${p.description ? `<div class="desc">${esc(p.description)}</div>` : '<p class="muted" style="margin:0">No description.</p>'}
+
+      <div class="section-title">Comments (${p.comments.length})</div>
+      ${p.comments.map(c => `
+        <div class="comment">
+          <div class="comment-head"><span title="${esc(fmtDateTime(c.at))}">${rel(c.at)}</span>
+            <button class="btn sm ghost" data-act="del-comment" data-cid="${c.id}" aria-label="Delete comment">✕</button></div>
+          <div class="comment-text">${esc(c.text)}</div>
+        </div>`).join('')}
+      <form id="commentForm" style="display:flex;flex-direction:column;gap:8px">
+        <label for="commentInput" class="sr-only">Add a comment</label>
+        <textarea id="commentInput" rows="3" placeholder="Add a comment or progress update… (Ctrl+Enter to post)" style="min-height:70px">${esc(draft)}</textarea>
+        <div style="display:flex;justify-content:flex-end"><button class="btn primary sm" type="submit">Post comment</button></div>
+      </form>
+
+      <div class="section-title">Activity</div>
+      <ul class="timeline">
+        ${p.history.slice().reverse().map(h => `<li>${esc(h.text)}<time title="${esc(fmtDateTime(h.at))}">${rel(h.at)}</time></li>`).join('')}
+      </ul>`;
+  }
+
+  // ---------- Dialog control ----------
+  function openDetail(id) {
+    state.detailId = id;
+    const d = $('#detailDlg');
+    if ($('#commentInput')) $('#commentInput').value = '';
+    renderDetail();
+    if (!d.open) d.showModal();
+  }
+  function closeDetail() {
+    state.detailId = null;
+    const d = $('#detailDlg');
+    if (d.open) d.close();
+  }
+
+  function openForm(id = null, prefill = null) {
+    state.editingId = id;
+    const p = id ? find(id) : null;
+    const src = p || prefill || {};
+    const form = $('#problemForm');
+    $('#formTitle').textContent = p ? `Edit #${p.num}` : 'New problem';
+    $('#formSubmit').textContent = p ? 'Save changes' : 'Create problem';
+    $('#fStatusIn').innerHTML = STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+    $('#fPriorityIn').innerHTML = PRIORITIES.map(x => `<option value="${x.key}">${x.label}</option>`).join('');
+    form.title.value = src.title || '';
+    form.description.value = src.description || '';
+    form.status.value = src.status || 'open';
+    form.priority.value = src.priority || 'medium';
+    form.category.value = src.category || '';
+    form.assignee.value = src.assignee || '';
+    form.reporter.value = src.reporter || '';
+    form.dueDate.value = src.dueDate || '';
+    form.tags.value = (src.tags || []).join(', ');
+    $('#titleField').classList.remove('invalid');
+    $('#formDlg').showModal();
+    form.title.focus();
+  }
+
+  function submitForm() {
+    const form = $('#problemForm');
+    const title = form.title.value.trim();
+    if (!title) {
+      $('#titleField').classList.add('invalid');
+      form.title.focus();
+      return;
+    }
+    const fields = {
+      title,
+      description: form.description.value.trim(),
+      status: form.status.value,
+      priority: form.priority.value,
+      category: form.category.value.trim(),
+      assignee: form.assignee.value.trim(),
+      reporter: form.reporter.value.trim(),
+      dueDate: form.dueDate.value,
+      tags: parseTags(form.tags.value),
+    };
+    if (state.editingId) {
+      const changed = updateProblem(state.editingId, fields);
+      toast(changed ? 'Changes saved' : 'No changes');
+    } else {
+      const p = createProblem(fields);
+      toast(`Created #${p.num}`, { action: 'View', onAction: () => openDetail(p.id) });
+    }
+    $('#formDlg').close();
+  }
+
+  function confirmDialog({ title = 'Are you sure?', message, buttons }) {
+    return new Promise(resolve => {
+      const dlg = $('#confirmDlg');
+      $('#confirmTitle').textContent = title;
+      $('#confirmMsg').textContent = message;
+      const foot = $('#confirmFoot');
+      foot.innerHTML = '';
+      [{ label: 'Cancel', value: null }, ...buttons].forEach(b => {
+        const btn = document.createElement('button');
+        btn.className = 'btn ' + (b.cls || '');
+        btn.textContent = b.label;
+        btn.onclick = () => { dlg.close(); resolve(b.value); };
+        foot.appendChild(btn);
+      });
+      dlg.onclose = () => resolve(null); // Esc → cancel (resolve is idempotent)
+      dlg.showModal();
+      foot.lastElementChild.focus();
+    });
+  }
+
+  // ---------- Toasts ----------
+  function toast(msg, { type = '', action, onAction, timeout = 5000 } = {}) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.innerHTML = `<span>${esc(msg)}</span>`;
+    if (action) {
+      const b = document.createElement('button');
+      b.textContent = action;
+      b.onclick = () => { onAction(); el.remove(); };
+      el.appendChild(b);
+    }
+    $('#toasts').appendChild(el);
+    setTimeout(() => el.remove(), timeout);
+  }
+
+  // ---------- Import / export ----------
+  function download(filename, text, mime) {
+    const blob = new Blob([text], { type: mime });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function exportJSON() {
+    download(`problem-tracker-backup-${todayStr()}.json`,
+      JSON.stringify({ app: 'problem-tracker', version: 1, exportedAt: new Date().toISOString(), problems: state.problems }, null, 2),
+      'application/json');
+    toast(`Exported ${state.problems.length} problems`);
+  }
+
+  function exportCSV() {
+    const list = getFiltered();
+    const cell = v => {
+      let s = String(v ?? '');
+      if (/^[=+\-@]/.test(s)) s = "'" + s; // guard against spreadsheet formula injection
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = ['ID', 'Title', 'Status', 'Priority', 'Category', 'Assignee', 'Reporter', 'Due date', 'Tags', 'Created', 'Updated', 'Resolved', 'Comments', 'Description'];
+    const rows = list.map(p => [
+      p.num, p.title, statusLabel(p.status), prioLabel(p.priority), p.category, p.assignee, p.reporter, p.dueDate,
+      p.tags.join('; '), new Date(p.createdAt).toISOString(), new Date(p.updatedAt).toISOString(),
+      p.resolvedAt ? new Date(p.resolvedAt).toISOString() : '', p.comments.length, p.description,
+    ].map(cell).join(','));
+    download(`problems-${todayStr()}.csv`, '﻿' + [header.join(','), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
+    toast(`Exported ${list.length} problems to CSV`);
+  }
+
+  async function importJSON(file) {
+    let incoming;
+    try {
+      const data = JSON.parse(await file.text());
+      const arr = Array.isArray(data) ? data : data.problems;
+      if (!Array.isArray(arr)) throw new Error('No "problems" array found');
+      incoming = arr.map(normalize);
+    } catch (e) {
+      toast('Import failed: ' + e.message, { type: 'error' });
+      return;
+    }
+    if (!incoming.length) { toast('That file contains no problems.'); return; }
+
+    let mode = 'merge';
+    if (state.problems.length) {
+      mode = await confirmDialog({
+        title: 'Import problems',
+        message: `The file has ${incoming.length} problems. Merge them with your ${state.problems.length} existing problems (matching IDs are overwritten), or replace everything?`,
+        buttons: [{ label: 'Replace all', value: 'replace', cls: 'danger' }, { label: 'Merge', value: 'merge', cls: 'primary' }],
+      });
+      if (!mode) return;
+    }
+    if (mode === 'replace') {
+      state.problems = incoming;
+    } else {
+      const byId = new Map(state.problems.map(p => [p.id, p]));
+      incoming.forEach(p => byId.set(p.id, p));
+      state.problems = [...byId.values()];
+    }
+    state.selected.clear();
+    renumber();
+    commit();
+    toast(`Imported ${incoming.length} problems`);
+  }
+
+  function addSamples() {
+    const day = 864e5, now = Date.now();
+    const samples = [
+      { title: 'Users cannot log in to the student portal', description: 'Since this morning, students get "Invalid session" after entering correct credentials.\n\nSteps:\n1. Go to portal login\n2. Enter valid credentials\n3. Error appears\n\nAffects roughly 30% of users.', status: 'in-progress', priority: 'critical', category: 'Access / Accounts', assignee: 'Jordan Lee', reporter: 'Help Desk', dueDate: todayStr(0), tags: ['login', 'portal'], ago: 0.3 },
+      { title: 'Printer on 2nd floor jams on double-sided jobs', description: 'Paper jams in tray 2 whenever duplex printing is used.', status: 'open', priority: 'medium', category: 'Hardware', assignee: '', reporter: 'Sam Patel', dueDate: todayStr(5), tags: ['printer'], ago: 2 },
+      { title: 'Monthly sales report shows duplicate rows', description: 'The Excel export from the CRM duplicates orders that were edited after creation.', status: 'blocked', priority: 'high', category: 'Software', assignee: 'Avery Kim', reporter: 'Finance', dueDate: todayStr(-2), tags: ['reporting', 'crm'], ago: 6 },
+      { title: 'Wi-Fi drops in conference room B', description: 'Connection drops every ~10 minutes during meetings. Possibly an access point issue.', status: 'open', priority: 'high', category: 'Network', assignee: 'Jordan Lee', reporter: 'Facilities', dueDate: todayStr(1), tags: ['wifi'], ago: 1 },
+      { title: 'Add dark mode to internal dashboard', description: 'Several staff members requested a dark theme.', status: 'open', priority: 'low', category: 'Feature Request', assignee: '', reporter: 'Avery Kim', dueDate: '', tags: ['ui'], ago: 9 },
+      { title: 'New hire laptop setup checklist is outdated', description: 'Checklist still references the old VPN client.', status: 'resolved', priority: 'medium', category: 'Process', assignee: 'Sam Patel', reporter: 'HR', dueDate: todayStr(-4), tags: ['onboarding', 'docs'], ago: 12, resolvedAfter: 3 },
+      { title: 'Backup job failed on file server', description: 'Nightly backup reported "disk quota exceeded".', status: 'closed', priority: 'high', category: 'Infrastructure', assignee: 'Avery Kim', reporter: 'Monitoring', dueDate: '', tags: ['backup'], ago: 20, resolvedAfter: 0.5 },
+    ];
+    samples.forEach(s => {
+      const created = now - s.ago * day;
+      const p = normalize({ ...s, id: uid(), num: state.nextNum++, createdAt: created, updatedAt: s.resolvedAfter ? created + s.resolvedAfter * day : created });
+      p.history.push({ at: created, text: `Created with status Open and priority ${prioLabel(p.priority)}` });
+      if (s.resolvedAfter) {
+        p.resolvedAt = created + s.resolvedAfter * day;
+        p.history.push({ at: p.resolvedAt, text: `Status: Open → ${statusLabel(p.status)}` });
+      } else if (p.status !== 'open') {
+        p.history.push({ at: created + 3600e3, text: `Status: Open → ${statusLabel(p.status)}` });
+      }
+      if (s.status === 'in-progress') p.comments.push({ id: uid(), text: 'Identified a misconfigured session timeout on the load balancer. Testing a fix.', at: now - 1800e3 });
+      state.problems.push(p);
+    });
+    commit();
+    toast(`Added ${samples.length} sample problems`);
+  }
+
+  // ---------- Prefs & theme ----------
+  function setPref(key, value) {
+    state.prefs[key] = value;
+    savePrefs();
+    render();
+  }
+  function applyTheme() {
+    const t = state.prefs.theme;
+    if (t) document.documentElement.dataset.theme = t;
+    else delete document.documentElement.dataset.theme;
+  }
+  function currentTheme() {
+    return state.prefs.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+
+  // ---------- Events ----------
+  function bind() {
+    $('#btnNew').onclick = () => openForm();
+    $('#btnTheme').onclick = () => {
+      state.prefs.theme = currentTheme() === 'dark' ? 'light' : 'dark';
+      savePrefs();
+      applyTheme();
+    };
+
+    // Filters
+    let qTimer;
+    $('#q').addEventListener('input', e => {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(() => setPref('q', e.target.value), 120);
+    });
+    $('#fStatus').onchange = e => setPref('status', e.target.value);
+    $('#fPriority').onchange = e => setPref('priority', e.target.value);
+    $('#fCategory').onchange = e => setPref('category', e.target.value);
+    $('#fAssignee').onchange = e => setPref('assignee', e.target.value);
+    $('#fSort').onchange = e => setPref('sort', e.target.value);
+    $('#fHideDone').onchange = e => setPref('hideDone', e.target.checked);
+    $$('[data-view]').forEach(b => b.onclick = () => setPref('view', b.dataset.view));
+    $('#stats').addEventListener('click', e => {
+      const t = e.target.closest('[data-quick]');
+      if (t) setPref('quick', state.prefs.quick === t.dataset.quick ? null : t.dataset.quick);
+    });
+
+    // Menu
+    $('#mainMenu').addEventListener('click', e => {
+      const b = e.target.closest('[data-menu]');
+      if (!b) return;
+      $('#mainMenu').open = false;
+      menuAction(b.dataset.menu);
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#mainMenu')) $('#mainMenu').open = false;
+    });
+    $('#importFile').onchange = e => {
+      const f = e.target.files[0];
+      if (f) importJSON(f);
+      e.target.value = '';
+    };
+
+    // Main view (delegated)
+    const view = $('#view');
+    view.addEventListener('click', e => {
+      const tag = e.target.closest('[data-tag]');
+      if (tag) { e.stopPropagation(); searchTag(tag.dataset.tag); return; }
+      const act = e.target.closest('[data-act]');
+      if (act) { handleAct(act.dataset.act); return; }
+      const sortTh = e.target.closest('[data-sort]');
+      if (sortTh) { setPref('sort', sortTh.dataset.sort); return; }
+      if (e.target.id === 'selAll') {
+        const ids = getFiltered().map(p => p.id);
+        if (e.target.checked) ids.forEach(id => state.selected.add(id)); else state.selected.clear();
+        renderView(); renderBulk();
+        return;
+      }
+      const row = e.target.closest('.row, .card');
+      if (!row) return;
+      if (e.target.classList.contains('row-cb')) {
+        const id = row.dataset.id;
+        if (e.target.checked) state.selected.add(id); else state.selected.delete(id);
+        renderView(); renderBulk();
+        return;
+      }
+      if (e.target.closest('.cbcell')) return;
+      openDetail(row.dataset.id);
+    });
+    view.addEventListener('keydown', e => {
+      const row = e.target.closest('.row, .card');
+      if (row && e.target === row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDetail(row.dataset.id); }
+    });
+    $('#resultCount').addEventListener('click', e => {
+      const act = e.target.closest('[data-act]');
+      if (act) handleAct(act.dataset.act);
+    });
+
+    // Board drag & drop
+    view.addEventListener('dragstart', e => {
+      const card = e.target.closest('.card');
+      if (!card) return;
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+    view.addEventListener('dragend', e => {
+      e.target.closest('.card')?.classList.remove('dragging');
+      $$('.col.drag-over').forEach(c => c.classList.remove('drag-over'));
+    });
+    view.addEventListener('dragover', e => {
+      const col = e.target.closest('.col');
+      if (!col) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      $$('.col.drag-over').forEach(c => c !== col && c.classList.remove('drag-over'));
+      col.classList.add('drag-over');
+    });
+    view.addEventListener('dragleave', e => {
+      const col = e.target.closest('.col');
+      if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+    });
+    view.addEventListener('drop', e => {
+      const col = e.target.closest('.col');
+      if (!col) return;
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      const p = find(id);
+      if (p && p.status !== col.dataset.status) {
+        updateProblem(id, { status: col.dataset.status });
+        toast(`#${p.num} moved to ${statusLabel(col.dataset.status)}`);
+      }
+    });
+
+    // Bulk
+    $('#bulkStatus').innerHTML += STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+    $('#bulkPriority').innerHTML += PRIORITIES.map(p => `<option value="${p.key}">${p.label}</option>`).join('');
+    $('#bulkStatus').onchange = e => bulkUpdate('status', e.target);
+    $('#bulkPriority').onchange = e => bulkUpdate('priority', e.target);
+    $('#bulkDelete').onclick = () => deleteProblems([...state.selected]);
+    $('#bulkClear').onclick = () => { state.selected.clear(); renderView(); renderBulk(); };
+
+    // Form
+    $('#problemForm').addEventListener('submit', e => { e.preventDefault(); submitForm(); });
+    $('#problemForm').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitForm(); }
+    });
+    $('#fTitle').addEventListener('input', () => $('#titleField').classList.remove('invalid'));
+
+    // Detail drawer
+    const detail = $('#detailDlg');
+    detail.addEventListener('close', () => { state.detailId = null; });
+    detail.addEventListener('click', e => {
+      if (e.target === detail) { closeDetail(); return; } // click on backdrop
+      const tag = e.target.closest('[data-tag]');
+      if (tag) { closeDetail(); searchTag(tag.dataset.tag); return; }
+      const act = e.target.closest('[data-act]');
+      if (!act) return;
+      const id = state.detailId;
+      if (act.dataset.act === 'edit') openForm(id);
+      else if (act.dataset.act === 'delete') deleteProblems([id]);
+      else if (act.dataset.act === 'duplicate') {
+        const p = find(id);
+        openForm(null, { ...p, title: p.title + ' (copy)', status: 'open' });
+      } else if (act.dataset.act === 'del-comment') deleteComment(id, act.dataset.cid);
+    });
+    detail.addEventListener('change', e => {
+      const field = e.target.dataset.field;
+      if (field) updateProblem(state.detailId, { [field]: e.target.value });
+    });
+    detail.addEventListener('submit', e => {
+      if (e.target.id !== 'commentForm') return;
+      e.preventDefault();
+      const input = $('#commentInput');
+      const text = input.value;
+      input.value = '';
+      addComment(state.detailId, text);
+      $('#commentInput')?.focus();
+    });
+    detail.addEventListener('keydown', e => {
+      if (e.target.id === 'commentInput' && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        $('#commentForm').requestSubmit();
+      }
+    });
+
+    // Generic close buttons + backdrop click for the form/help dialogs
+    $$('dialog').forEach(d => {
+      d.addEventListener('click', e => {
+        if (e.target.closest('[data-close]')) d.close();
+        else if (e.target === d && d.id !== 'detailDlg' && d.id !== 'confirmDlg') d.close();
+      });
+    });
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
+      const anyModal = $$('dialog').some(d => d.open);
+      if (e.key === 'Escape' && document.activeElement === $('#q') && $('#q').value) {
+        $('#q').value = ''; setPref('q', ''); return;
+      }
+      if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.toLowerCase() === 'e' && state.detailId && !$('#formDlg').open) { e.preventDefault(); openForm(state.detailId); return; }
+      if (anyModal) return;
+      const k = e.key;
+      if (k === 'n' || k === 'N') { e.preventDefault(); openForm(); }
+      else if (k === '/') { e.preventDefault(); $('#q').focus(); }
+      else if (k === 'l' || k === 'L') setPref('view', 'list');
+      else if (k === 'b' || k === 'B') setPref('view', 'board');
+      else if (k === '?') $('#helpDlg').showModal();
+    });
+
+    // Sync between browser tabs
+    window.addEventListener('storage', e => {
+      if (e.key === STORE_KEY) {
+        load();
+        render();
+        toast('Updated from another tab');
+      }
+    });
+
+    // Refresh relative times / overdue state every minute
+    setInterval(render, 60_000);
+  }
+
+  function bulkUpdate(field, select) {
+    const value = select.value;
+    select.value = '';
+    if (!value) return;
+    let n = 0;
+    state.selected.forEach(id => { if (updateProblem(id, { [field]: value }, { silent: true })) n++; });
+    commit();
+    toast(`Updated ${n} problem${n === 1 ? '' : 's'}`);
+  }
+
+  function searchTag(tag) {
+    state.prefs.q = '#' + tag;
+    $('#q').value = state.prefs.q;
+    savePrefs();
+    render();
+  }
+
+  function handleAct(act) {
+    if (act === 'new') openForm();
+    else if (act === 'sample') addSamples();
+    else if (act === 'import') $('#importFile').click();
+    else if (act === 'reset-filters') {
+      const { view, sort, theme } = state.prefs;
+      state.prefs = { ...DEFAULT_PREFS, view, sort, theme };
+      $('#q').value = '';
+      savePrefs();
+      render();
+    }
+  }
+
+  async function menuAction(action) {
+    if (action === 'export-json') exportJSON();
+    else if (action === 'export-csv') exportCSV();
+    else if (action === 'import') $('#importFile').click();
+    else if (action === 'sample') addSamples();
+    else if (action === 'help') $('#helpDlg').showModal();
+    else if (action === 'clear') {
+      if (!state.problems.length) { toast('Nothing to delete'); return; }
+      const ok = await confirmDialog({
+        title: 'Delete all data?',
+        message: `This permanently deletes all ${state.problems.length} problems from this browser. Consider exporting a JSON backup first.`,
+        buttons: [{ label: 'Export backup first', value: 'backup' }, { label: 'Delete everything', value: 'delete', cls: 'danger' }],
+      });
+      if (ok === 'backup') exportJSON();
+      if (ok === 'delete') {
+        state.problems = [];
+        state.selected.clear();
+        state.nextNum = 1;
+        closeDetail();
+        commit();
+        toast('All data deleted');
+      }
+    }
+  }
+
+  // ---------- Init ----------
+  load();
+  applyTheme();
+  bind();
+  render();
+})();
+</script>
+</body>
+</html>

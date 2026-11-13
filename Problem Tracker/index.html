@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Problem Tracker</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --surface: #ffffff; --border: #dadee6;
+    --text: #1b2130; --muted: #5f6b80; --accent: #3654d1; --on-accent: #fff;
+    --danger: #c92a2a;
+    --heading: #d6336c;
+    --daily-bg: #ffe3e3;   --daily-fg: #a61e1e;
+    --weekly-bg: #fff1d6;  --weekly-fg: #8a5300;
+    --monthly-bg: #dbeefe; --monthly-fg: #1864ab;
+    --rarely-bg: #e9ecef;  --rarely-fg: #495057;
+    --open-bg: #e7ecff;     --open-fg: #2c45b0;
+    --progress-bg: #fff1d6; --progress-fg: #8a5300;
+    --solved-bg: #d3f9d8;   --solved-fg: #2b8a3e;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151c; --surface: #1a1f29; --border: #313949;
+      --text: #e6e9ef; --muted: #98a2b5; --accent: #7b93ff; --on-accent: #0d1020;
+      --danger: #ff8787;
+      --heading: #f783ac;
+      --daily-bg: #4a2026;   --daily-fg: #ffa8a8;
+      --weekly-bg: #43361b;  --weekly-fg: #ffd47a;
+      --monthly-bg: #1b3550; --monthly-fg: #8ccaff;
+      --rarely-bg: #2b3140;  --rarely-fg: #c1c8d4;
+      --open-bg: #232c4d;     --open-fg: #a5b4ff;
+      --progress-bg: #43361b; --progress-fg: #ffd47a;
+      --solved-bg: #1d3b27;   --solved-fg: #8ce99a;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 24px; margin: 0 0 16px; text-align: center; color: var(--heading); }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  form { display: grid; gap: 10px; margin-bottom: 24px; }
+  label { font-weight: 600; font-size: 13px; display: grid; gap: 4px; }
+  input, textarea, select {
+    font: inherit; color: inherit; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; width: 100%;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  select { cursor: pointer; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    justify-self: start; font: inherit; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: var(--on-accent);
+    border: 0; border-radius: 8px; padding: 8px 16px;
+  }
+  button:hover { filter: brightness(1.08); }
+  .error { color: var(--danger); font-size: 13px; min-height: 1em; margin: 0; }
+
+  .list-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--muted); font-size: 13px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .filters .search { flex: 1 1 200px; }
+  .filters select { width: auto; flex: 0 0 auto; }
+  .badges { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; flex: none; }
+  .status {
+    width: auto; font-size: 12px; font-weight: 600; padding: 2px 8px;
+    border-radius: 999px; border: 0; background: var(--status-bg); color: var(--status-fg);
+  }
+  .status-open        { --status-bg: var(--open-bg);     --status-fg: var(--open-fg); }
+  .status-in-progress { --status-bg: var(--progress-bg); --status-fg: var(--progress-fg); }
+  .status-resolved    { --status-bg: var(--solved-bg);   --status-fg: var(--solved-fg); }
+  li.solved h3 { color: var(--muted); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  li h3 { margin: 0 0 4px; font-size: 16px; overflow-wrap: anywhere; }
+  li p { margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .captured { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .freq {
+    flex: none; font-size: 12px; font-weight: 600; padding: 2px 10px;
+    border-radius: 999px; background: var(--freq-bg); color: var(--freq-fg);
+  }
+  .freq-daily   { --freq-bg: var(--daily-bg);   --freq-fg: var(--daily-fg); }
+  .freq-weekly  { --freq-bg: var(--weekly-bg);  --freq-fg: var(--weekly-fg); }
+  .freq-monthly { --freq-bg: var(--monthly-bg); --freq-fg: var(--monthly-fg); }
+  .freq-rarely, .freq-none { --freq-bg: var(--rarely-bg); --freq-fg: var(--rarely-fg); }
+  .captured .ago::before { content: "·"; margin: 0 6px; }
+  .empty { color: var(--muted); text-align: center; padding: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Problem Tracker</h1>
+
+  <form id="new-problem" class="card" novalidate>
+    <h2>Add a problem</h2>
+    <label>Title
+      <input id="title" name="title" maxlength="200" autocomplete="off" required>
+    </label>
+    <label>How often does it happen?
+      <select id="frequency" name="frequency" required>
+        <option value="" selected disabled>Choose a frequency…</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="rarely">Rarely</option>
+      </select>
+    </label>
+    <label>Description
+      <textarea id="description" name="description" maxlength="5000"></textarea>
+    </label>
+    <p id="error" class="error" role="alert"></p>
+    <button type="submit">Add problem</button>
+  </form>
+
+  <section>
+    <div class="list-head">
+      <h2>Problems</h2>
+      <span id="count" class="count"></span>
+    </div>
+    <div class="filters">
+      <input id="search" class="search" type="search" placeholder="Search by title…"
+             aria-label="Search problems by title" autocomplete="off">
+      <select id="status-filter" aria-label="Filter by status"></select>
+    </div>
+    <ul id="list"></ul>
+  </section>
+</main>
+
+<script>
+  // Same key and shape as the full version (index.full-backup.html),
+  // so data saved by either version is readable by the other.
+  const STORAGE_KEY = "problemTracker.data.v1";
+  const DATA_VERSION = 1;
+
+  let problems = [];
+  let savedExtras = {};
+
+  const FREQUENCIES = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", rarely: "Rarely" };
+
+  // Status keys match the full version's, so either app reads the other's data.
+  // "resolved" is shown as "Solved" here.
+  const STATUSES = { open: "Open", "in-progress": "In progress", resolved: "Solved" };
+  // Statuses only the full version sets → the group they display/filter as here.
+  // The stored value is kept as-is until the user picks a new status.
+  const STATUS_GROUP = { blocked: "in-progress", closed: "resolved" };
+  const statusGroup = s => STATUSES.hasOwnProperty(s) ? s : (STATUS_GROUP[s] || "open");
+
+  // Fill in defaults so older or partial records never break the app.
+  // `...p` keeps fields this version doesn't use (status, tags, etc.)
+  // so saving here never strips data written by the full version.
+  function normalize(p) {
+    const created = typeof p.createdAt === "number" ? p.createdAt : Date.parse(p.createdAt);
+    return {
+      ...p,
+      id: String(p.id || Date.now().toString(36) + Math.random().toString(36).slice(2)),
+      title: String(p.title || "").trim() || "(untitled)",
+      description: String(p.description || ""),
+      // Problems saved before this field existed (or with a bad value) become "" = not rated
+      frequency: FREQUENCIES.hasOwnProperty(p.frequency) ? p.frequency : "",
+      // Problems saved before status existed (or with an unknown value) become "open"
+      status: STATUSES.hasOwnProperty(p.status) || STATUS_GROUP.hasOwnProperty(p.status) ? p.status : "open",
+      createdAt: Number.isFinite(created) ? created : Date.now()   // ms timestamp
+    };
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const data = JSON.parse(raw);
+      if (data && !Array.isArray(data) && typeof data === "object") {
+        const { problems: _p, version: _v, savedAt: _s, ...rest } = data;
+        savedExtras = rest;
+      }
+      const list = Array.isArray(data) ? data : data && data.problems;
+      return Array.isArray(list) ? list.filter(p => p && typeof p === "object").map(normalize) : [];
+    } catch (err) {
+      console.warn("Could not load saved problems:", err);
+      return [];
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...savedExtras,          // preserve other top-level fields (e.g. nextNum)
+        version: DATA_VERSION,
+        savedAt: Date.now(),
+        problems
+      }));
+      return true;
+    } catch (err) {
+      console.warn("Could not save problems:", err);
+      return false;
+    }
+  }
+
+  // Every state change goes through here: save, then re-render.
+  function commit() {
+    const ok = save();
+    render();
+    return ok;
+  }
+
+  const DATE_FMT = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+  function timeAgo(ms) {
+    const mins = Math.floor((Date.now() - ms) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + " min ago";
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + (hrs === 1 ? " hr ago" : " hrs ago");
+    const days = Math.floor(hrs / 24);
+    return days + (days === 1 ? " day ago" : " days ago");
+  }
+
+  // Current filters (view state only, never saved)
+  let searchQuery = "";
+  let statusFilter = "all";
+
+  // Rebuild the status filter options so their counts stay current, e.g. "Open (3)".
+  function renderStatusFilter() {
+    const select = document.getElementById("status-filter");
+    const all = document.createElement("option");
+    all.value = "all";
+    all.textContent = "All statuses";
+    const options = [all];
+    for (const [key, label] of Object.entries(STATUSES)) {
+      const n = problems.filter(p => statusGroup(p.status) === key).length;
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = label + " (" + n + ")";
+      options.push(opt);
+    }
+    select.replaceChildren(...options);
+    select.value = statusFilter;
+  }
+
+  function render() {
+    const list = document.getElementById("list");
+    list.replaceChildren();
+    renderStatusFilter();
+
+    const q = searchQuery.trim().toLowerCase();
+    const visible = problems.filter(p =>
+      (!q || p.title.toLowerCase().includes(q)) &&
+      (statusFilter === "all" || statusGroup(p.status) === statusFilter));
+    const total = problems.length === 1 ? "1 problem" : problems.length + " problems";
+    const filtering = q || statusFilter !== "all";
+    document.getElementById("count").textContent =
+      filtering ? visible.length + " of " + total : total;
+
+    if (visible.length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty card";
+      li.textContent = problems.length === 0
+        ? "No problems yet. Add one above."
+        : "No problems match your filters.";
+      list.append(li);
+      return;
+    }
+
+    // Newest first
+    const sorted = [...visible].sort((a, b) => b.createdAt - a.createdAt);
+    for (const p of sorted) {
+      const group = statusGroup(p.status);
+      const li = document.createElement("li");
+      li.className = "card" + (group === "resolved" ? " solved" : "");
+
+      const h3 = document.createElement("h3");
+      h3.textContent = p.title;
+
+      const freq = document.createElement("span");
+      freq.className = "freq freq-" + (p.frequency || "none");
+      freq.textContent = p.frequency ? FREQUENCIES[p.frequency] : "Not rated";
+
+      // Status dropdown: a real data change, so it goes through commit()
+      const status = document.createElement("select");
+      status.className = "status status-" + group;
+      status.setAttribute("aria-label", "Status of " + p.title);
+      for (const [key, label] of Object.entries(STATUSES)) {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = label;
+        status.append(opt);
+      }
+      status.value = group;
+      status.addEventListener("change", () => {
+        p.status = status.value;
+        if (!commit()) alert("Status changed, but couldn't save. Storage may be full or disabled.");
+      });
+
+      const badges = document.createElement("div");
+      badges.className = "badges";
+      badges.append(status, freq);
+
+      const head = document.createElement("div");
+      head.className = "card-head";
+      head.append(h3, badges);
+      li.append(head);
+
+      // "Captured Nov 12, 2026, 1:42 PM · 5 min ago"
+      const captured = document.createElement("p");
+      captured.className = "captured";
+      const time = document.createElement("time");
+      time.dateTime = new Date(p.createdAt).toISOString();
+      time.textContent = "Captured " + DATE_FMT.format(p.createdAt);
+      const ago = document.createElement("span");
+      ago.className = "ago";
+      ago.textContent = timeAgo(p.createdAt);
+      captured.append(time, ago);
+      li.append(captured);
+
+      if (p.description) {
+        const desc = document.createElement("p");
+        desc.textContent = p.description;
+        li.append(desc);
+      }
+
+      list.append(li);
+    }
+  }
+
+  document.getElementById("new-problem").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const titleEl = document.getElementById("title");
+    const descEl = document.getElementById("description");
+    const errorEl = document.getElementById("error");
+    const freqEl = document.getElementById("frequency");
+    const title = titleEl.value.trim();
+    const frequency = freqEl.value;
+
+    if (!title) {
+      errorEl.textContent = "Please enter a title.";
+      titleEl.focus();
+      return;
+    }
+    if (!FREQUENCIES.hasOwnProperty(frequency)) {
+      errorEl.textContent = "Please choose how often it happens.";
+      freqEl.focus();
+      return;
+    }
+
+    problems.push(normalize({
+      title,
+      frequency,
+      status: "open",
+      description: descEl.value.trim(),
+      createdAt: Date.now()
+    }));
+
+    if (commit()) {
+      errorEl.textContent = "";
+      e.target.reset();
+      titleEl.focus();
+    } else {
+      errorEl.textContent = "Added, but couldn't save. Storage may be full or disabled.";
+    }
+  });
+
+  // Filtering is display-only, so render() rather than commit().
+  document.getElementById("search").addEventListener("input", (e) => {
+    searchQuery = e.target.value;
+    render();
+  });
+  document.getElementById("status-filter").addEventListener("change", (e) => {
+    statusFilter = e.target.value;
+    render();
+  });
+
+  problems = load();
+  render();
+  // Keep "x min ago" current. Display-only refresh, no data changes, so no commit().
+  setInterval(render, 60000);
+</script>
+</body>
+</html>
