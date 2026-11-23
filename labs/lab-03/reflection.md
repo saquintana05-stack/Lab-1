@@ -1,0 +1,5 @@
+Problems keeping track of utility bill (roommates living together) (said)
+Friend thinks dishwasher over handwashing saves more (and vice versa) (Said)
+Cost varies since utilities are split (Paid)
+People have different solutions on how to combat it (Did)
+Wants roommates to be more collaborative rather than combative (said)
