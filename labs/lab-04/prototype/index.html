@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Expense Tracker</title>
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <main>
+    <h1>Student Expense Tracker</h1>
+
+    <section class="card">
+      <h2>Monthly Budget</h2>
+      <form id="budget-form" class="budget-form" novalidate>
+        <label>Budget per month ($)
+          <input type="number" id="budget" min="0" step="0.01" placeholder="e.g. 200" />
+        </label>
+        <button type="submit">Set budget</button>
+      </form>
+      <p id="budget-status" class="budget-status" aria-live="polite"></p>
+    </section>
+
+    <section class="card">
+      <h2>Add Expense</h2>
+      <form id="expense-form" novalidate>
+        <label>Date
+          <input type="date" id="date" required />
+        </label>
+        <label>Amount ($)
+          <input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" required />
+        </label>
+        <label>Category
+          <select id="category" required>
+            <option value="">Choose…</option>
+          </select>
+        </label>
+        <label class="wide">Note (optional)
+          <input type="text" id="note" maxlength="80" placeholder="e.g. groceries" />
+        </label>
+        <button type="submit" id="add-expense">Add expense</button>
+      </form>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section>
+      <h2>Expenses by Month</h2>
+      <div id="months"></div>
+    </section>
+  </main>
+
+  <script src="src/expenses.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>

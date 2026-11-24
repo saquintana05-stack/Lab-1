@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --text: #1c2230;
+  --muted: #5d6573;
+  --line: #e1e5ea;
+  --track: #e8ecf0;
+  --chip: #eef2f7;
+  --accent: #2f6fde;
+  --accent-hover: #2459b8;
+  --on-accent: #ffffff;
+  --ok: #167c3d;
+  --ok-bg: #e7f5ec;
+  --err: #b42318;
+  --err-bg: #fdecea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151a;
+    --surface: #1b1f26;
+    --text: #e8ebef;
+    --muted: #9aa3af;
+    --line: #2c323b;
+    --track: #2a3039;
+    --chip: #262c35;
+    --accent: #6b9cf0;
+    --accent-hover: #8db3f5;
+    --on-accent: #0d1320;
+    --ok: #52c985;
+    --ok-bg: #16301f;
+    --err: #f2867b;
+    --err-bg: #3a1d1a;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-track: var(--track);
+  --color-chip: var(--chip);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-err: var(--err);
+  --color-err-bg: var(--err-bg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}

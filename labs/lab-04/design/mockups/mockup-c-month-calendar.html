@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup C – Month Calendar Review</title>
+<style>
+  :root { --line:#dfe3e8; --muted:#727a86; --accent:#5b4bd6; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fbfaf7; color:#1e1f24; font:14px/1.45 Georgia, "Times New Roman", serif; }
+  .tag { background:#222; color:#fff; font:12px system-ui, sans-serif; padding:6px 16px; }
+  .wrap { max-width:1100px; margin:0 auto; padding:20px 16px 40px; display:grid; grid-template-columns:1fr 300px; gap:22px; position:relative; }
+  header { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:26px; font-weight:400; }
+  header .nav { font:14px system-ui, sans-serif; color:var(--muted); }
+  header .nav b { color:#1e1f24; margin:0 10px; }
+  .cal { display:grid; grid-template-columns:repeat(7,1fr); border-top:1px solid var(--line); border-left:1px solid var(--line); font-family:system-ui, sans-serif; }
+  .dow { font-size:11px; text-transform:uppercase; color:var(--muted); padding:6px 8px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#f3f1ec; }
+  .d { min-height:78px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px 8px; position:relative; background:#fff; }
+  .d .n { font-size:12px; color:var(--muted); }
+  .d .s { position:absolute; bottom:6px; right:8px; font-weight:600; font-variant-numeric:tabular-nums; font-size:13px; }
+  .d.l1 { background:#f1eefe; } .d.l2 { background:#ddd6fb; } .d.l3 { background:#c3b8f7; }
+  .d.today { outline:2px solid var(--accent); outline-offset:-2px; }
+  .d.future { background:#fafafa; color:#bbb; }
+  .d.today .add { position:absolute; bottom:6px; right:8px; font-size:12px; color:var(--accent); font-weight:600; }
+  aside { font-family:system-ui, sans-serif; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; }
+  .panel h3 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .total { font:32px Georgia, serif; }
+  .ring { display:flex; align-items:center; gap:14px; }
+  .donut { width:84px; height:84px; border-radius:50%; background:conic-gradient(#5b4bd6 0 34%, #e0794a 34% 61%, #2e9e8f 61% 85%, #d4a72c 85% 92%, #8a93a3 92% 97%, #c64b72 97% 100%); position:relative; flex:none; }
+  .donut::after { content:""; position:absolute; inset:18px; background:#fff; border-radius:50%; }
+  ul { list-style:none; margin:0; padding:0; font-size:13px; }
+  li { display:flex; justify-content:space-between; padding:2px 0; }
+  li i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px; }
+  .btn { width:100%; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:11px; font-size:15px; font-weight:600; }
+  /* Step-by-step add dialog, shown open */
+  .scrim { position:absolute; inset:0; background:rgba(20,18,40,.35); display:flex; align-items:center; justify-content:center; border-radius:6px; }
+  .dialog { width:360px; max-width:92%; background:#fff; border-radius:14px; padding:20px; font-family:system-ui, sans-serif; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+  .steps { display:flex; gap:6px; margin-bottom:14px; font-size:12px; color:var(--muted); }
+  .steps span { flex:1; border-top:3px solid #e5e2f5; padding-top:4px; }
+  .steps span.on { border-color:var(--accent); color:#1e1f24; font-weight:600; }
+  .dialog h2 { margin:0 0 4px; font-size:18px; }
+  .dialog p { margin:0 0 12px; color:var(--muted); font-size:13px; }
+  .cats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .cats div { border:1px solid var(--line); border-radius:10px; padding:10px 4px; text-align:center; font-size:13px; }
+  .cats div.sel { border:2px solid var(--accent); background:#f1eefe; font-weight:600; }
+  .actions { display:flex; justify-content:space-between; }
+  .actions button { border:0; background:none; font-size:14px; color:var(--muted); }
+  .actions button.next { background:var(--accent); color:#fff; border-radius:8px; padding:8px 16px; font-weight:600; }
+  .note { max-width:1100px; margin:0 auto 40px; padding:16px; border-top:2px dashed #aaa; font-family:system-ui, sans-serif; }
+  .note h4 { margin:0 0 6px; }
+  @media (max-width:820px) { .wrap { grid-template-columns:1fr; } .d { min-height:56px; } .d .s { font-size:11px; } }
+</style>
+</head>
+<body>
+<div class="tag">MOCKUP C · Month calendar review with step-by-step add · static, throwaway · "Add expense" dialog shown open at step 2</div>
+<div class="wrap">
+  <header>
+    <h1>November 2026</h1>
+    <div class="nav">‹ Oct <b>Nov</b> Dec ›</div>
+  </header>
+
+  <div>
+    <div class="cal">
+      <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+      <div class="d l2"><span class="n">1</span><span class="s">$42.18</span></div>
+      <div class="d"><span class="n">2</span></div>
+      <div class="d l1"><span class="n">3</span><span class="s">$20.00</span></div>
+      <div class="d l1"><span class="n">4</span><span class="s">$11.85</span></div>
+      <div class="d"><span class="n">5</span></div>
+      <div class="d l3"><span class="n">6</span><span class="s">$64.99</span></div>
+      <div class="d"><span class="n">7</span></div>
+      <div class="d l1"><span class="n">8</span><span class="s">$14.50</span></div>
+      <div class="d"><span class="n">9</span></div>
+      <div class="d l1"><span class="n">10</span><span class="s">$15.00</span></div>
+      <div class="d"><span class="n">11</span></div>
+      <div class="d l2"><span class="n">12</span><span class="s">$28.47</span></div>
+      <div class="d"><span class="n">13</span></div>
+      <div class="d l1"><span class="n">14</span><span class="s">$5.99</span></div>
+      <div class="d l1"><span class="n">15</span><span class="s">$18.25</span></div>
+      <div class="d"><span class="n">16</span></div>
+      <div class="d l2"><span class="n">17</span><span class="s">$23.40</span></div>
+      <div class="d"><span class="n">18</span></div>
+      <div class="d l1"><span class="n">19</span><span class="s">$9.76</span></div>
+      <div class="d l1"><span class="n">20</span><span class="s">$5.25</span></div>
+      <div class="d l1"><span class="n">21</span><span class="s">$17.60</span></div>
+      <div class="d l2"><span class="n">22</span><span class="s">$31.20</span></div>
+      <div class="d today"><span class="n">23 · today</span><span class="add">+ add</span></div>
+      <div class="d future"><span class="n">24</span></div>
+      <div class="d future"><span class="n">25</span></div>
+      <div class="d future"><span class="n">26</span></div>
+      <div class="d future"><span class="n">27</span></div>
+      <div class="d future"><span class="n">28</span></div>
+      <div class="d future"><span class="n">29</span></div>
+      <div class="d future"><span class="n">30</span></div>
+      <div class="d future"></div><div class="d future"></div><div class="d future"></div><div class="d future"></div><div class="d future"></div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h3>Spent this month</h3>
+      <div class="total">$308.44</div>
+      <div style="color:#727a86">of $400.00 · $91.56 left</div>
+    </div>
+    <div class="panel">
+      <h3>By category</h3>
+      <div class="ring">
+        <div class="donut"></div>
+        <ul style="flex:1">
+          <li><span><i style="background:#5b4bd6"></i>Food</span><span>$105.35</span></li>
+          <li><span><i style="background:#e0794a"></i>School</span><span>$83.24</span></li>
+          <li><span><i style="background:#2e9e8f"></i>Transport</span><span>$74.60</span></li>
+          <li><span><i style="background:#d4a72c"></i>Fun</span><span>$20.49</span></li>
+          <li><span><i style="background:#8a93a3"></i>Housing</span><span>$15.00</span></li>
+          <li><span><i style="background:#c64b72"></i>Health</span><span>$9.76</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Compared with October</h3>
+      <ul>
+        <li><span>October total</span><span>$382.10</span></li>
+        <li><span>Same point last month</span><span>$331.80</span></li>
+        <li><span>You're ahead by</span><span style="color:#178a43">$23.36</span></li>
+      </ul>
+    </div>
+    <button class="btn">Add expense</button>
+  </aside>
+
+  <div class="scrim">
+    <div class="dialog">
+      <div class="steps"><span class="on">1 · Amount</span><span class="on">2 · Category</span><span>3 · Date</span></div>
+      <h2>$46.80 — what was it for?</h2>
+      <p>You'll have $44.76 left for November after this.</p>
+      <div class="cats">
+        <div class="sel">🛒 Food</div><div>🚌 Transport</div><div>🏠 Housing</div>
+        <div>📚 School</div><div>🎬 Fun</div><div>💊 Health</div>
+      </div>
+      <div class="actions"><button>‹ Back</button><button class="next">Next: date ›</button></div>
+    </div>
+  </div>
+</div>
+
+<section class="note">
+  <h4>What this assumes about the user</h4>
+  <p>The student sits down once or twice a week on a laptop with their receipts or bank app and catches up, so the screen is built for reviewing a whole month and spotting heavy days rather than for quick capture. They're unsure about categories and budgets, so adding an expense walks them through one question at a time and shows the budget impact before they commit.</p>
+</section>
+</body>
+</html>

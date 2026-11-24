@@ -1,0 +1,9 @@
+{
+  "name": "student-expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Track student expenses per month (S1 / FR-1)",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
